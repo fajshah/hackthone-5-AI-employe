@@ -1,0 +1,14 @@
+# Database Dependencies
+
+# PostgreSQL driver
+psycopg2-binary>=2.9.9
+
+# Vector similarity search
+pgvector>=0.2.4
+
+# Connection pooling (included in psycopg2)
+# Connection pool management
+sqlalchemy>=2.0.25
+
+# Utilities
+python-dotenv>=1.0.0

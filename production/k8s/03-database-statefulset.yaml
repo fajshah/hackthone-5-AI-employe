@@ -1,0 +1,162 @@
+---
+# PostgreSQL StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: technova
+  labels:
+    app: postgres
+    component: database
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: pgvector/pgvector:pg16
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: postgres
+              containerPort: 5432
+              protocol: TCP
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: technova-config
+                  key: DATABASE_NAME
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: technova-config
+                  key: DATABASE_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: technova-secrets
+                  key: DATABASE_PASSWORD
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+            - name: postgres-init
+              mountPath: /docker-entrypoint-initdb.d
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - technova
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - technova
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+      volumes:
+        - name: postgres-init
+          configMap:
+            name: postgres-init-config
+            defaultMode: 0755
+      securityContext:
+        fsGroup: 999
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: standard
+
+---
+# ConfigMap for PostgreSQL initialization
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-config
+  namespace: technova
+data:
+  01-pgvector.sql: |
+    CREATE EXTENSION IF NOT EXISTS vector;
+  
+  02-schema.sql: |
+    -- Create tables
+    CREATE TABLE IF NOT EXISTS customers (
+      customer_id VARCHAR(255) PRIMARY KEY,
+      email VARCHAR(255) UNIQUE,
+      phone VARCHAR(50) UNIQUE,
+      name VARCHAR(255) NOT NULL,
+      company VARCHAR(255),
+      account_tier VARCHAR(50) DEFAULT 'basic',
+      is_vip BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      last_contact_at TIMESTAMP WITH TIME ZONE
+    );
+    
+    CREATE TABLE IF NOT EXISTS conversations (
+      conversation_id VARCHAR(255) PRIMARY KEY,
+      customer_id VARCHAR(255) NOT NULL REFERENCES customers(customer_id),
+      channel VARCHAR(50) NOT NULL,
+      status VARCHAR(50) DEFAULT 'active',
+      started_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      last_message_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+    
+    CREATE TABLE IF NOT EXISTS messages (
+      message_id VARCHAR(255) PRIMARY KEY,
+      conversation_id VARCHAR(255) NOT NULL REFERENCES conversations(conversation_id),
+      customer_id VARCHAR(255) NOT NULL REFERENCES customers(customer_id),
+      role VARCHAR(20) NOT NULL,
+      content TEXT NOT NULL,
+      channel VARCHAR(50) NOT NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+    
+    CREATE TABLE IF NOT EXISTS tickets (
+      ticket_id VARCHAR(50) PRIMARY KEY,
+      customer_id VARCHAR(255) NOT NULL REFERENCES customers(customer_id),
+      subject VARCHAR(500) NOT NULL,
+      status VARCHAR(50) DEFAULT 'open',
+      priority VARCHAR(10) DEFAULT 'P3',
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+    
+    CREATE TABLE IF NOT EXISTS knowledge_base (
+      id SERIAL PRIMARY KEY,
+      feature VARCHAR(255) NOT NULL,
+      content TEXT NOT NULL,
+      category VARCHAR(100),
+      embedding vector(1536),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+    
+    -- Create indexes
+    CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(email);
+    CREATE INDEX IF NOT EXISTS idx_tickets_customer ON tickets(customer_id);
+    CREATE INDEX IF NOT EXISTS idx_kb_embedding ON knowledge_base USING ivfflat (embedding vector_cosine_ops);

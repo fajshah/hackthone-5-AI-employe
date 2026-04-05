@@ -1,0 +1,119 @@
+# Prometheus Configuration for Customer Success FTE
+# Monitors API, workers, database, and Kafka
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+# Rule files
+rule_files:
+  - "alerts.yml"
+
+# Scrape configurations
+scrape_configs:
+  # FTE API metrics
+  - job_name: 'fte-api'
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names:
+            - customer-success-fte
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        action: keep
+        regex: customer-success-fte
+      - source_labels: [__meta_kubernetes_pod_label_component]
+        action: keep
+        regex: api
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'http_request_duration_.*'
+        action: keep
+
+  # FTE Message Processor metrics
+  - job_name: 'fte-message-processor'
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names:
+            - customer-success-fte
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        action: keep
+        regex: customer-success-fte
+      - source_labels: [__meta_kubernetes_pod_label_component]
+        action: keep
+        regex: message-processor
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+
+  # PostgreSQL metrics
+  - job_name: 'postgres'
+    static_configs:
+      - targets:
+          - postgres.customer-success-fte.svc.cluster.local:9187
+    metrics_path: '/metrics'
+    relabel_configs:
+      - target_label: environment
+        replacement: production
+
+  # Kafka metrics
+  - job_name: 'kafka'
+    static_configs:
+      - targets:
+          - kafka.customer-success-fte.svc.cluster.local:9308
+    metrics_path: '/metrics'
+    relabel_configs:
+      - target_label: environment
+        replacement: production
+
+  # Node exporter (infrastructure metrics)
+  - job_name: 'node-exporter'
+    kubernetes_sd_configs:
+      - role: node
+    relabel_configs:
+      - action: labelmap
+        regex: __meta_kubernetes_node_label_(.+)
+      - target_label: __address__
+        replacement: kubernetes.default.svc:443
+      - source_labels: [__meta_kubernetes_node_name]
+        regex: (.+)
+        target_label: __metrics_path__
+        replacement: /api/v1/nodes/${1}/proxy/metrics
+
+# Custom metrics for FTE
+  # Business metrics (custom exporter)
+  - job_name: 'fte-business-metrics'
+    static_configs:
+      - targets:
+          - fte-api.customer-success-fte.svc.cluster.local:8000
+    metrics_path: '/metrics'
+    relabel_configs:
+      - target_label: environment
+        replacement: production

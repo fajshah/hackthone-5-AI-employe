@@ -1,0 +1,155 @@
+---
+# API Server Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: support-api
+  namespace: technova
+  labels:
+    app: support-api
+    component: api
+    version: v1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: support-api
+  template:
+    metadata:
+      labels:
+        app: support-api
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics/prometheus"
+    spec:
+      serviceAccountName: technova-service-account
+      containers:
+        - name: api
+          image: technova/support-api:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+          env:
+            # API Configuration
+            - name: API_HOST
+              value: "0.0.0.0"
+            - name: API_PORT
+              value: "8000"
+            - name: API_WORKERS
+              value: "4"
+            - name: API_DEBUG
+              value: "false"
+            
+            # Database
+            - name: DATABASE_URL
+              value: "postgresql://technova:$(DATABASE_PASSWORD)@postgres:5432/technova"
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: technova-secrets
+                  key: DATABASE_PASSWORD
+            
+            # Kafka
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka:9092"
+            - name: KAFKA_ENABLED
+              value: "true"
+            
+            # OpenAI
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: technova-secrets
+                  key: OPENAI_API_KEY
+            
+            # API Security
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: technova-secrets
+                  key: API_KEY
+            
+            # Load from ConfigMap
+            - name: RATE_LIMIT_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: technova-config
+                  key: RATE_LIMIT_ENABLED
+            - name: RATE_LIMIT_REQUESTS
+              valueFrom:
+                configMapKeyRef:
+                  name: technova-config
+                  key: RATE_LIMIT_REQUESTS
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: technova-config
+                  key: LOG_LEVEL
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: secrets-volume
+              mountPath: /etc/secrets
+              readOnly: true
+      volumes:
+        - name: secrets-volume
+          secret:
+            secretName: technova-secrets
+            items:
+              - key: gmail-service-account.json
+                path: gmail-service-account.json
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+
+---
+# API Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: support-api
+  namespace: technova
+  labels:
+    app: support-api
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+      protocol: TCP
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
+  selector:
+    app: support-api

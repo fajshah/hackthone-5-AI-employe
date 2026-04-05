@@ -1,0 +1,85 @@
+---
+# All Services
+# Database Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: technova
+  labels:
+    app: postgres
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 5432
+      protocol: TCP
+      name: postgres
+  selector:
+    app: postgres
+
+---
+# Kafka Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  namespace: technova
+  labels:
+    app: kafka
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9092
+      targetPort: 9092
+      protocol: TCP
+      name: kafka
+    - port: 29092
+      targetPort: 29092
+      protocol: TCP
+      name: kafka-external
+  selector:
+    app: kafka
+
+---
+# API Service (already in api-deployment.yaml, but included for completeness)
+apiVersion: v1
+kind: Service
+metadata:
+  name: support-api
+  namespace: technova
+  labels:
+    app: support-api
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+      protocol: TCP
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
+  selector:
+    app: support-api
+
+---
+# Worker Service (for internal communication)
+apiVersion: v1
+kind: Service
+metadata:
+  name: support-worker
+  namespace: technova
+  labels:
+    app: support-worker
+spec:
+  type: ClusterIP
+  clusterIP: None  # Headless service
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  selector:
+    app: support-worker

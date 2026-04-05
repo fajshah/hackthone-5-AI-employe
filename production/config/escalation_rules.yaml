@@ -1,0 +1,269 @@
+# TechNova Escalation Rules Configuration
+# This file defines escalation rules for the Customer Success FTE
+# Format: YAML
+
+escalation_rules:
+  - id: RULE_001
+    name: "Pricing & Enterprise Sales"
+    description: "Any inquiry about Enterprise pricing, custom contracts, or volume discounts"
+    priority: P2
+    response_time_hours: 4
+    route_to: "sales_team_enterprise"
+    keywords:
+      - "enterprise"
+      - "pricing"
+      - "quote"
+      - "contract"
+      - "volume discount"
+      - "50+ users"
+      - "100+ users"
+      - "custom pricing"
+      - "negotiate"
+    action: "escalate"
+    ai_response: "I'd be happy to connect you with our Enterprise Sales team who can provide custom pricing for your organization. They'll reach out within 4 business hours."
+    do_not: "Provide custom pricing quotes as AI. Always escalate."
+
+  - id: RULE_002
+    name: "Refund & Billing Disputes"
+    description: "Refund requests, double charges, payment failures, billing discrepancies"
+    priority: P1
+    response_time_hours: 2
+    route_to: "billing_specialist"
+    keywords:
+      - "refund"
+      - "charged twice"
+      - "billing error"
+      - "payment failed"
+      - "overcharged"
+      - "dispute"
+      - "chargeback"
+    action: "escalate"
+    ai_response: "I understand your concern about the billing issue. I'm escalating this to our Billing Specialist who will review your account and respond within 2 hours."
+    do_not: "Promise refunds. Acknowledge and escalate immediately."
+
+  - id: RULE_003
+    name: "Legal & Compliance"
+    description: "GDPR, HIPAA, SOC 2, data processing agreements, legal inquiries"
+    priority: P1
+    response_time_hours: 1
+    route_to: "legal_compliance_team"
+    keywords:
+      - "GDPR"
+      - "HIPAA"
+      - "SOC 2"
+      - "compliance"
+      - "legal"
+      - "BAA"
+      - "data processing"
+      - "audit"
+      - "lawsuit"
+      - "attorney"
+      - "subpoena"
+    action: "escalate_immediately"
+    ai_response: "I understand this is an important compliance matter. I'm connecting you with our Legal & Compliance team who will provide the documentation you need within 1 business hour."
+    do_not: "Provide any legal commitments or interpretations. Escalate immediately."
+
+  - id: RULE_004
+    name: "Angry/Threatening Customers"
+    description: "Aggressive language, threats to leave, profanity, all-caps messages"
+    priority: P1
+    response_time_minutes: 30
+    route_to: "senior_support_team_lead"
+    keywords:
+      - "cancel immediately"
+      - "worst service"
+      - "unacceptable"
+      - "useless"
+      - "threaten"
+      - "lawyer"
+      - "sue"
+      - "review bomb"
+      - "twitter"
+      - "social media"
+    sentiment_threshold: 0.3
+    action: "escalate_urgent"
+    ai_response: "I completely understand your frustration, and I sincerely apologize for this experience. I'm connecting you with our Senior Support team who will prioritize your case and respond within 30 minutes."
+    do_not: "Be defensive. Acknowledge frustration, empathize, escalate with urgency."
+
+  - id: RULE_005
+    name: "Technical Bugs Affecting Multiple Users"
+    description: "System-wide issues, outages, core feature failures"
+    priority: P0
+    response_time_minutes: 15
+    route_to: "engineering_team_pagerduty"
+    keywords:
+      - "not working"
+      - "broken"
+      - "outage"
+      - "down"
+      - "all users"
+      - "everyone"
+      - "system-wide"
+      - "critical bug"
+    action: "escalate_critical"
+    ai_response: "Thank you for reporting this issue. I've flagged this as a priority incident and our Engineering team is being notified. They'll investigate immediately."
+    do_not: "Promise fix timelines. Acknowledge, gather details, escalate."
+
+  - id: RULE_006
+    name: "Data Loss or Security Breach"
+    description: "Missing data, unauthorized access, security breaches, account hijacking"
+    priority: P0
+    response_time_minutes: 15
+    route_to: "security_team_engineering_lead"
+    keywords:
+      - "data lost"
+      - "missing data"
+      - "hacked"
+      - "unauthorized access"
+      - "security breach"
+      - "account compromised"
+      - "deleted permanently"
+    action: "escalate_critical"
+    ai_response: "I understand this is a serious security concern. I'm immediately escalating this to our Security team as a priority incident. They'll contact you within 15 minutes."
+    do_not: "Speculate on cause or scope. Treat as P0 incident. Escalate immediately."
+
+  - id: RULE_007
+    name: "VIP Customer Issues"
+    description: "Enterprise tier customers, high-value accounts, C-level executives"
+    priority: P1
+    response_time_hours: 1
+    route_to: "dedicated_account_manager_senior_support"
+    identification:
+      - account_tier: "Enterprise"
+      - arr_threshold: 10000
+      - title_keywords:
+          - "CEO"
+          - "CTO"
+          - "CIO"
+          - "VP"
+          - "Director"
+    action: "flag_vip_escalate"
+    ai_response: "Thank you for reaching out. I understand this is important for your organization. I'm connecting you with your dedicated Account Manager who will assist you within 1 hour."
+    do_not: "Handle as regular ticket. Flag as VIP in all communications."
+
+  - id: RULE_008
+    name: "Integration & API Technical Support"
+    description: "Complex API issues, custom integrations, webhook failures"
+    priority: P2
+    response_time_hours: 4
+    route_to: "developer_support_integration_specialist"
+    keywords:
+      - "API"
+      - "webhook"
+      - "integration"
+      - "developer"
+      - "custom code"
+      - "REST"
+      - "SDK"
+      - "rate limit"
+      - "authentication error"
+    action: "escalate"
+    ai_response: "I understand you need technical assistance with the API. I'm connecting you with our Developer Support team who can help debug this issue within 4 business hours."
+    do_not: "Debug complex code issues. Gather technical details and escalate."
+
+  - id: RULE_009
+    name: "Account Cancellation & Retention"
+    description: "Cancellation requests, especially from long-term or high-value customers"
+    priority: P2
+    response_time_hours: 2
+    route_to: "retention_specialist"
+    keywords:
+      - "cancel"
+      - "close account"
+      - "stop subscription"
+      - "leaving"
+      - "switching to competitor"
+    action: "attempt_retention_escalate"
+    ai_response: "I'm sorry to hear you're considering cancellation. I understand there may be concerns we can address. Let me connect you with our Customer Success team who can discuss options within 2 hours."
+    do_not: "Process cancellation immediately. Understand reason, offer alternatives, escalate."
+
+  - id: RULE_010
+    name: "Feature Requests Requiring Product Team"
+    description: "Complex feature requests, roadmap inquiries, engineering effort estimation"
+    priority: P3
+    response_time_hours: 24
+    route_to: "product_management_team"
+    keywords:
+      - "feature request"
+      - "roadmap"
+      - "when will"
+      - "add feature"
+      - "suggestion"
+      - "product idea"
+      - "custom development"
+    action: "log_and_escalate"
+    ai_response: "That's a great suggestion! I've logged this in our product feedback board. Our Product team reviews these requests weekly and will evaluate it for future releases."
+    do_not: "Commit to feature development. Acknowledge value, log in product board, escalate."
+
+# Priority Matrix
+priority_matrix:
+  P0:
+    name: "Critical"
+    response_time_minutes: 15
+    examples:
+      - "Security breach"
+      - "System outage"
+      - "Data loss"
+  
+  P1:
+    name: "High"
+    response_time_hours: 1
+    examples:
+      - "VIP customer"
+      - "Angry customer"
+      - "Billing dispute"
+  
+  P2:
+    name: "Medium"
+    response_time_hours: 4
+    examples:
+      - "API issues"
+      - "Technical bugs"
+      - "Cancellation"
+  
+  P3:
+    name: "Low"
+    response_time_hours: 24
+    examples:
+      - "Feature requests"
+      - "General inquiries"
+
+# Escalation Handoff Template
+handoff_template: |
+  **Customer:** [Name, Company, Account Tier]
+  **Issue Summary:** [2-3 sentence description]
+  **Category:** [Billing/Technical/Legal/etc.]
+  **Priority:** [P0/P1/P2/P3]
+  **Customer Sentiment:** [Calm/Frustrated/Angry]
+  **Actions Taken:** [What AI agent already tried]
+  **Relevant Details:** [Transaction IDs, error messages, etc.]
+  **Requested Resolution:** [What customer wants]
+  **SLA Deadline:** [When response is due]
+
+# De-escalation Guidelines
+de_escalation_steps:
+  - step: 1
+    action: "Acknowledge"
+    description: "Validate customer's concern"
+  
+  - step: 2
+    action: "Empathize"
+    description: "Show understanding of their situation"
+  
+  - step: 3
+    action: "Clarify"
+    description: "Gather all necessary details"
+  
+  - step: 4
+    action: "Set Expectations"
+    description: "Explain next steps and timeline"
+  
+  - step: 5
+    action: "Assure"
+    description: "Confirm that appropriate team will handle"
+
+de_escalation_example: |
+  "I understand how frustrating this must be, especially with your deadline approaching. 
+  Let me connect you with our [specialist team] who can resolve this quickly. 
+  They'll reach out within [SLA timeframe]. 
+  In the meantime, I've documented all the details you've shared."

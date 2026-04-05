@@ -1,0 +1,180 @@
+# Alerting Rules for Customer Success FTE
+# Format: Prometheus alerting rules
+
+groups:
+  - name: fte_alerts
+    rules:
+      # P0 - Database Down
+      - alert: PostgreSQLDown
+        expr: pg_up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: fte
+          page: "true"
+        annotations:
+          summary: "PostgreSQL database is down"
+          description: "PostgreSQL instance {{ $labels.instance }} has been unreachable for over 1 minute"
+          runbook_url: "https://github.com/technova/fte/docs/runbooks/p0-database-outage.md"
+
+      # P0 - Kafka Down
+      - alert: KafkaDown
+        expr: kafka_brokers{job="kafka"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: fte
+          page: "true"
+        annotations:
+          summary: "Kafka cluster is down"
+          description: "No Kafka brokers are available in cluster {{ $labels.cluster }}"
+          runbook_url: "https://github.com/technova/fte/docs/runbooks/p0-kafka-failure.md"
+
+      # P1 - High API Error Rate
+      - alert: HighAPIErrorRate
+        expr: |
+          rate(http_requests_total{job="fte-api", status=~"5.."}[5m]) 
+          / rate(http_requests_total{job="fte-api"}[5m]) 
+          > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: fte
+        annotations:
+          summary: "High API error rate ({{ $value | humanizePercentage }})"
+          description: "More than 10% of API requests are failing with 5xx errors"
+
+      # P1 - OpenAI API High Error Rate
+      - alert: OpenAIApiErrorRate
+        expr: |
+          rate(openai_api_errors_total[5m]) 
+          / rate(openai_api_calls_total[5m]) 
+          > 0.2
+        for: 5m
+        labels:
+          severity: warning
+          team: fte
+        annotations:
+          summary: "OpenAI API error rate is {{ $value | humanizePercentage }}"
+          description: "More than 20% of OpenAI API calls are failing"
+          runbook_url: "https://github.com/technova/fte/docs/runbooks/p1-openai-api-degradation.md"
+
+      # P1 - OpenAI API High Latency
+      - alert: OpenAIApiLatency
+        expr: histogram_quantile(0.95, rate(openai_api_latency_bucket[5m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+          team: fte
+        annotations:
+          summary: "OpenAI API P95 latency is {{ $value }}s"
+          description: "P95 latency to OpenAI API exceeds 10 seconds"
+
+      # P1 - Webhook High Error Rate
+      - alert: WebhookErrorRate
+        expr: |
+          rate(http_requests_total{job="fte-api", path=~"/webhooks/.*", status=~"4..|5.."}[5m])
+          / rate(http_requests_total{job="fte-api", path=~"/webhooks/.*"}[5m])
+          > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: fte
+        annotations:
+          summary: "Webhook error rate is {{ $value | humanizePercentage }}"
+          description: "More than 10% of webhook requests are failing"
+          runbook_url: "https://github.com/technova/fte/docs/runbooks/p1-channel-webhook-failures.md"
+
+      # P2 - High Escalation Rate
+      - alert: HighEscalationRate
+        expr: |
+          rate(tickets_escalated_total[1h]) 
+          / rate(tickets_created_total[1h]) 
+          > 0.25
+        for: 1h
+        labels:
+          severity: warning
+          team: fte
+        annotations:
+          summary: "Escalation rate is {{ $value | humanizePercentage }}"
+          description: "More than 25% of tickets are being escalated"
+          runbook_url: "https://github.com/technova/fte/docs/runbooks/p2-high-escalation-rate.md"
+
+      # P2 - High Kafka Consumer Lag
+      - alert: KafkaConsumerLag
+        expr: kafka_consumer_lag{group="fte-message-processor"} > 1000
+        for: 5m
+        labels:
+          severity: warning
+          team: fte
+        annotations:
+          summary: "High Kafka consumer lag ({{ $value }} messages)"
+          description: "Message processor is falling behind on Kafka topic"
+
+      # P2 - High Response Latency
+      - alert: HighResponseLatency
+        expr: histogram_quantile(0.95, rate(agent_response_latency_bucket[5m])) > 3
+        for: 5m
+        labels:
+          severity: warning
+          team: fte
+        annotations:
+          summary: "P95 agent response latency is {{ $value }}s"
+          description: "P95 latency for agent responses exceeds 3 seconds"
+
+      # P2 - Pod CrashLooping
+      - alert: PodCrashLooping
+        expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
+        labels:
+          severity: warning
+          team: fte
+        annotations:
+          summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} is crash looping"
+          description: "Pod has restarted {{ $value }} times in the last 15 minutes"
+
+      # P3 - High Database Connection Count
+      - alert: HighDatabaseConnections
+        expr: pg_stat_activity_count > 80
+        for: 10m
+        labels:
+          severity: info
+          team: fte
+        annotations:
+          summary: "High database connection count ({{ $value }})"
+          description: "PostgreSQL connection count is approaching max_connections limit"
+
+      # P3 - Disk Space Low
+      - alert: DiskSpaceLow
+        expr: node_filesystem_avail_bytes / node_filesystem_size_bytes < 0.1
+        for: 10m
+        labels:
+          severity: info
+          team: infra
+        annotations:
+          summary: "Disk space is low on {{ $labels.instance }}"
+          description: "Less than 10% disk space remaining on {{ $labels.mountpoint }}"
+
+  - name: fte_recording_rules
+    rules:
+      # Record escalation rate by channel
+      - record: job:fte_escalation_rate:by_channel
+        expr: |
+          rate(tickets_escalated_total[1h]) 
+          / rate(tickets_created_total[1h])
+
+      # Record average response time by channel
+      - record: job:fte_avg_response_time:by_channel
+        expr: |
+          rate(agent_response_latency_sum[5m]) 
+          / rate(agent_response_latency_count[5m])
+
+      # Record ticket volume by channel
+      - record: job:fte_ticket_volume:by_channel
+        expr: rate(tickets_created_total[1h])
+
+      # Record sentiment distribution
+      - record: job:fte_sentiment_distribution
+        expr: |
+          count by (sentiment_category) (
+            conversations_sentiment_score
+          )

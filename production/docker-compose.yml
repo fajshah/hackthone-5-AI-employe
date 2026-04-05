@@ -1,0 +1,274 @@
+# TechNova Customer Support - Docker Compose
+
+# Complete local development environment with all services
+
+version: '3.8'
+
+services:
+  # ============================================================================
+  # PostgreSQL Database
+  # ============================================================================
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: technova-postgres
+    environment:
+      POSTGRES_DB: technova
+      POSTGRES_USER: technova
+      POSTGRES_PASSWORD: technova_password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U technova"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - technova-network
+
+  # ============================================================================
+  # Kafka (with Zookeeper)
+  # ============================================================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: technova-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+    networks:
+      - technova-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: technova-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - technova-network
+
+  # Kafka topic creator (runs once on startup)
+  kafka-topics:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: technova-kafka-topics
+    depends_on:
+      - kafka
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        echo "Waiting for Kafka to be ready..."
+        sleep 30
+        kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic channel-email --partitions 3 --replication-factor 1
+        kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic channel-whatsapp --partitions 3 --replication-factor 1
+        kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic channel-webform --partitions 3 --replication-factor 1
+        kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic agent-requests --partitions 3 --replication-factor 1
+        kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic agent-responses --partitions 3 --replication-factor 1
+        kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic agent-escalations --partitions 3 --replication-factor 1
+        echo "Topics created successfully"
+    networks:
+      - technova-network
+
+  # ============================================================================
+  # Redis (for caching and rate limiting)
+  # ============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: technova-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - technova-network
+
+  # ============================================================================
+  # API Server
+  # ============================================================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: technova-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+      - "9090:9090"
+    environment:
+      # Database
+      DATABASE_URL: postgresql://technova:technova_password@postgres:5432/technova
+      
+      # Kafka
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_ENABLED: "true"
+      
+      # Redis
+      REDIS_URL: redis://redis:6379/0
+      
+      # API
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+      API_WORKERS: 2
+      API_DEBUG: "true"
+      API_KEY: dev-api-key
+      
+      # OpenAI
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-dev-key}
+      
+      # Logging
+      LOG_LEVEL: DEBUG
+      LOG_REQUESTS: "true"
+    volumes:
+      - ./api:/app/api
+      - ./agent:/app/agent
+      - ./database:/app/database
+      - ./workers:/app/workers
+      - ./kafka_client.py:/app/kafka_client.py
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - technova-network
+    restart: unless-stopped
+
+  # ============================================================================
+  # Message Processor Worker
+  # ============================================================================
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      # Database
+      DATABASE_URL: postgresql://technova:technova_password@postgres:5432/technova
+      
+      # Kafka
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_CONSUMER_GROUP: technova-message-processor
+      
+      # OpenAI
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-sk-dev-key}
+      
+      # Worker
+      MAX_CONCURRENT_MESSAGES: 5
+      LOG_LEVEL: DEBUG
+    volumes:
+      - ./agent:/app/agent
+      - ./database:/app/database
+      - ./workers:/app/workers
+      - ./kafka_client.py:/app/kafka_client.py
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "message_processor"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - technova-network
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+
+  # ============================================================================
+  # pgAdmin (Database Management)
+  # ============================================================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: technova-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@technova.com
+      PGADMIN_DEFAULT_PASSWORD: admin_password
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - technova-network
+    profiles:
+      - tools
+
+  # ============================================================================
+  # Kafka UI (Kafka Management)
+  # ============================================================================
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: technova-kafka-ui
+    environment:
+      KAFKA_CLUSTERS_0_NAME: technova
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    ports:
+      - "8080:8080"
+    depends_on:
+      - kafka
+    networks:
+      - technova-network
+    profiles:
+      - tools
+
+# ============================================================================
+# Volumes
+# ============================================================================
+volumes:
+  postgres_data:
+    driver: local
+  zookeeper_data:
+    driver: local
+  kafka_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+# ============================================================================
+# Networks
+# ============================================================================
+networks:
+  technova-network:
+    driver: bridge

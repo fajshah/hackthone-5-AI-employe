@@ -1,0 +1,15 @@
+# Workers Dependencies
+
+# Kafka (async)
+aiokafka==0.9.0
+kafka-python==2.0.2
+
+# Async support
+asyncio==3.4.3
+
+# Database (shared with agent)
+psycopg2-binary>=2.9.9
+pgvector>=0.2.4
+
+# Utilities
+python-dotenv==1.0.0

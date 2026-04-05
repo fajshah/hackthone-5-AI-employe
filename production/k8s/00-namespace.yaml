@@ -1,0 +1,10 @@
+---
+# Namespace for TechNova Customer Support
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: technova
+  labels:
+    name: technova
+    environment: production
+    team: support

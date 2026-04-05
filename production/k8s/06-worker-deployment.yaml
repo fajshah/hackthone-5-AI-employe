@@ -1,0 +1,133 @@
+---
+# Message Processor Worker Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: support-worker
+  namespace: technova
+  labels:
+    app: support-worker
+    component: worker
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: support-worker
+  template:
+    metadata:
+      labels:
+        app: support-worker
+        version: v1
+    spec:
+      serviceAccountName: technova-service-account
+      containers:
+        - name: worker
+          image: technova/support-worker:latest
+          imagePullPolicy: Always
+          command:
+            - python
+            - -m
+            - workers.message_processor
+          env:
+            # Database
+            - name: DATABASE_URL
+              value: "postgresql://technova:$(DATABASE_PASSWORD)@postgres:5432/technova"
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: technova-secrets
+                  key: DATABASE_PASSWORD
+            
+            # Kafka
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka:9092"
+            - name: KAFKA_CONSUMER_GROUP
+              valueFrom:
+                configMapKeyRef:
+                  name: technova-config
+                  key: KAFKA_CONSUMER_GROUP
+            - name: KAFKA_TOPIC_EMAIL
+              valueFrom:
+                configMapKeyRef:
+                  name: technova-config
+                  key: KAFKA_TOPIC_EMAIL
+            - name: KAFKA_TOPIC_WHATSAPP
+              valueFrom:
+                configMapKeyRef:
+                  name: technova-config
+                  key: KAFKA_TOPIC_WHATSAPP
+            - name: KAFKA_TOPIC_WEBFORM
+              valueFrom:
+                configMapKeyRef:
+                  name: technova-config
+                  key: KAFKA_TOPIC_WEBFORM
+            
+            # OpenAI
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: technova-secrets
+                  key: OPENAI_API_KEY
+            
+            # Worker Configuration
+            - name: MAX_CONCURRENT_MESSAGES
+              valueFrom:
+                configMapKeyRef:
+                  name: technova-config
+                  key: MAX_CONCURRENT_MESSAGES
+            - name: MESSAGE_PROCESSING_TIMEOUT_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: technova-config
+                  key: MESSAGE_PROCESSING_TIMEOUT_SECONDS
+            - name: SESSION_TIMEOUT_MINUTES
+              valueFrom:
+                configMapKeyRef:
+                  name: technova-config
+                  key: SESSION_TIMEOUT_MINUTES
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: technova-config
+                  key: LOG_LEVEL
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "1000m"
+            limits:
+              memory: "4Gi"
+              cpu: "4000m"
+          livenessProbe:
+            exec:
+              command:
+                - pgrep
+                - -f
+                - message_processor
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - pgrep
+                - -f
+                - message_processor
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: secrets-volume
+              mountPath: /etc/secrets
+              readOnly: true
+      volumes:
+        - name: secrets-volume
+          secret:
+            secretName: technova-secrets
+            items:
+              - key: gmail-service-account.json
+                path: gmail-service-account.json
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000

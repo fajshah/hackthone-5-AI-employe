@@ -1,0 +1,24 @@
+# Channel Handlers Dependencies
+
+# Gmail API
+google-auth==2.25.2
+google-auth-oauthlib==1.2.0
+google-auth-httplib2==0.2.0
+google-api-python-client==2.111.0
+
+# Google Cloud Pub/Sub
+google-cloud-pubsub==2.19.4
+
+# WhatsApp/Twilio
+twilio==8.11.1
+
+# Web Form
+Flask==3.0.0
+Werkzeug==3.0.1
+user-agents==2.2.0
+
+# Email parsing
+html2text==2020.1.16
+
+# Utilities
+python-dotenv==1.0.0

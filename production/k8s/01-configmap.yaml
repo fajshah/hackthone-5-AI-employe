@@ -1,0 +1,75 @@
+---
+# ConfigMap for non-sensitive configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: technova-config
+  namespace: technova
+  labels:
+    app: technova
+    environment: production
+data:
+  # API Configuration
+  API_HOST: "0.0.0.0"
+  API_PORT: "8000"
+  API_WORKERS: "4"
+  API_DEBUG: "false"
+  
+  # Feature Flags
+  ENABLE_CORS: "true"
+  CORS_ORIGINS: "https://technova.com,https://app.technova.com"
+  ALLOWED_HOSTS: "*"
+  
+  # Rate Limiting
+  RATE_LIMIT_ENABLED: "true"
+  RATE_LIMIT_REQUESTS: "100"
+  RATE_LIMIT_WINDOW_SECONDS: "60"
+  
+  # Kafka Configuration
+  KAFKA_ENABLED: "true"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+  KAFKA_CONSUMER_GROUP: "technova-message-processor"
+  KAFKA_AUTO_OFFSET_RESET: "latest"
+  KAFKA_ENABLE_AUTO_COMMIT: "false"
+  
+  # Kafka Topics
+  KAFKA_TOPIC_EMAIL: "channel-email"
+  KAFKA_TOPIC_WHATSAPP: "channel-whatsapp"
+  KAFKA_TOPIC_WEBFORM: "channel-webform"
+  KAFKA_TOPIC_RESPONSES: "agent-responses"
+  KAFKA_TOPIC_ESCALATIONS: "agent-escalations"
+  
+  # Database Configuration
+  DATABASE_HOST: "postgres"
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: "technova"
+  DATABASE_USER: "technova"
+  DATABASE_SSL_MODE: "prefer"
+  
+  # pgvector Configuration
+  PGVECTOR_DIMENSION: "1536"
+  
+  # Agent Configuration
+  MAX_KB_RESULTS: "5"
+  ENABLE_ESCALATION: "true"
+  MESSAGE_PROCESSING_TIMEOUT_SECONDS: "30"
+  SESSION_TIMEOUT_MINUTES: "30"
+  
+  # Worker Configuration
+  MAX_CONCURRENT_MESSAGES: "10"
+  RETRY_ON_FAILURE: "true"
+  MAX_RETRIES: "3"
+  HEALTH_CHECK_INTERVAL_SECONDS: "30"
+  
+  # Logging
+  LOG_LEVEL: "INFO"
+  LOG_REQUESTS: "true"
+  LOG_FORMAT: "json"
+  
+  # Monitoring
+  ENABLE_METRICS: "true"
+  METRICS_PORT: "9090"
+  
+  # Security
+  PII_REDACTION_ENABLED: "true"
+  GDPR_COMPLIANCE_MODE: "true"

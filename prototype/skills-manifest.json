@@ -1,0 +1,303 @@
+{
+  "version": "1.0",
+  "created": "2026-04-01",
+  "skills": [
+    {
+      "id": "knowledge-retrieval",
+      "name": "Knowledge Retrieval Skill",
+      "description": "Retrieve relevant information from company documentation, product docs, and historical tickets to answer customer queries accurately.",
+      "when_to_use": [
+        "Customer asks a question about products, services, or policies",
+        "Need to verify company procedures or guidelines",
+        "Looking for similar past tickets for reference",
+        "Agent needs context-specific information to formulate a response"
+      ],
+      "inputs": {
+        "query": {
+          "type": "string",
+          "description": "The customer's question or topic to search for",
+          "required": true
+        },
+        "context": {
+          "type": "object",
+          "description": "Optional context (customer tier, product category, urgency)",
+          "required": false
+        },
+        "sources": {
+          "type": "array",
+          "items": "string",
+          "description": "Preferred knowledge sources (e.g., ['product-docs', 'sample-tickets'])",
+          "required": false
+        }
+      },
+      "outputs": {
+        "results": {
+          "type": "array",
+          "description": "List of relevant documents/snippets with relevance scores"
+        },
+        "confidence": {
+          "type": "number",
+          "description": "Overall confidence score (0-1) of retrieved information"
+        },
+        "source_used": {
+          "type": "array",
+          "items": "string",
+          "description": "Which knowledge sources were queried"
+        }
+      }
+    },
+    {
+      "id": "sentiment-analysis",
+      "name": "Sentiment Analysis Skill",
+      "description": "Analyze customer emotion/tone to understand their state and adapt responses accordingly.",
+      "when_to_use": [
+        "Incoming customer message needs emotional context",
+        "Determining if a customer is frustrated, angry, or satisfied",
+        "Deciding response tone and urgency level",
+        "Monitoring conversation flow for sentiment changes"
+      ],
+      "inputs": {
+        "message": {
+          "type": "string",
+          "description": "The customer's message text",
+          "required": true
+        },
+        "conversation_history": {
+          "type": "array",
+          "description": "Previous messages in the conversation",
+          "required": false
+        },
+        "customer_profile": {
+          "type": "object",
+          "description": "Customer tier, past interactions",
+          "required": false
+        }
+      },
+      "outputs": {
+        "sentiment": {
+          "type": "string",
+          "enum": ["positive", "neutral", "negative", "angry", "frustrated"],
+          "description": "Overall sentiment"
+        },
+        "confidence": {
+          "type": "number",
+          "description": "Confidence score (0-1)"
+        },
+        "urgency_level": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"],
+          "description": "Urgency level based on sentiment"
+        },
+        "emotions": {
+          "type": "object",
+          "description": "Detected emotions with scores (e.g., {anger: 0.8, frustration: 0.6})"
+        },
+        "recommended_tone": {
+          "type": "string",
+          "enum": ["empathetic", "professional", "friendly", "apologetic"],
+          "description": "Suggested agent response tone"
+        }
+      }
+    },
+    {
+      "id": "escalation-decision",
+      "name": "Escalation Decision Skill",
+      "description": "Determine when a ticket or conversation should be escalated to a human agent or higher support tier.",
+      "when_to_use": [
+        "Customer explicitly requests escalation",
+        "Issue exceeds agent's capability or authority",
+        "Sentiment indicates high frustration/anger",
+        "Complex technical or billing issue detected",
+        "SLA or compliance requirements trigger escalation"
+      ],
+      "inputs": {
+        "ticket_content": {
+          "type": "string",
+          "description": "Full ticket or conversation content",
+          "required": true
+        },
+        "sentiment_analysis": {
+          "type": "object",
+          "description": "Output from Sentiment Analysis Skill",
+          "required": true
+        },
+        "customer_tier": {
+          "type": "string",
+          "description": "Customer level (e.g., 'standard', 'premium', 'enterprise')",
+          "required": true
+        },
+        "issue_category": {
+          "type": "string",
+          "description": "Classified issue type (e.g., 'billing', 'technical', 'complaint')",
+          "required": true
+        },
+        "resolution_attempts": {
+          "type": "number",
+          "description": "Number of attempted solutions",
+          "required": true
+        },
+        "conversation_duration": {
+          "type": "number",
+          "description": "Time spent on current conversation (minutes)",
+          "required": true
+        }
+      },
+      "outputs": {
+        "should_escalate": {
+          "type": "boolean",
+          "description": "Decision to escalate (true/false)"
+        },
+        "escalation_reason": {
+          "type": "string",
+          "description": "Reason for escalation decision"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "urgent"],
+          "description": "Escalation priority level"
+        },
+        "target_team": {
+          "type": "string",
+          "description": "Recommended team (e.g., 'technical-support', 'billing', 'manager')"
+        },
+        "context_summary": {
+          "type": "string",
+          "description": "Summary to pass to human agent"
+        },
+        "confidence": {
+          "type": "number",
+          "description": "Confidence in escalation decision (0-1)"
+        }
+      }
+    },
+    {
+      "id": "channel-adaptation",
+      "name": "Channel Adaptation Skill",
+      "description": "Adapt response format, tone, and content based on the communication channel (email, chat, phone, social media).",
+      "when_to_use": [
+        "Preparing a response for a specific channel",
+        "Adjusting message length and formality",
+        "Determining appropriate media (text, images, links)",
+        "Multi-channel conversation handoff"
+      ],
+      "inputs": {
+        "channel": {
+          "type": "string",
+          "enum": ["email", "chat", "phone", "social-media", "sms"],
+          "description": "Communication channel",
+          "required": true
+        },
+        "response_content": {
+          "type": "string",
+          "description": "Base response content to adapt",
+          "required": true
+        },
+        "customer_preferences": {
+          "type": "object",
+          "description": "Customer's channel preferences and history",
+          "required": false
+        },
+        "urgency": {
+          "type": "string",
+          "description": "Urgency level from sentiment analysis",
+          "required": false
+        },
+        "media_attachments": {
+          "type": "array",
+          "description": "Optional attachments to include",
+          "required": false
+        }
+      },
+      "outputs": {
+        "adapted_response": {
+          "type": "string",
+          "description": "Channel-optimized response text"
+        },
+        "format": {
+          "type": "object",
+          "description": "Formatting specifications (length, structure, style)"
+        },
+        "media_recommendations": {
+          "type": "array",
+          "description": "Suggested media to include (screenshots, links, documents)"
+        },
+        "timing": {
+          "type": "object",
+          "description": "Recommended send time/delay for this channel"
+        },
+        "follow_up_needed": {
+          "type": "boolean",
+          "description": "Whether follow-up is expected on this channel"
+        }
+      }
+    },
+    {
+      "id": "customer-identification",
+      "name": "Customer Identification Skill",
+      "description": "Identify and verify customer identity, retrieve their profile, and personalize the interaction.",
+      "when_to_use": [
+        "Customer initiates contact",
+        "Verification is required before accessing account information",
+        "Personalizing responses based on customer history",
+        "Determining customer tier and associated privileges"
+      ],
+      "inputs": {
+        "identifier": {
+          "type": "string",
+          "description": "Customer-provided identifier (email, phone, account ID, name)",
+          "required": true
+        },
+        "identifier_type": {
+          "type": "string",
+          "enum": ["email", "phone", "account_id", "name"],
+          "description": "Type of identifier",
+          "required": true
+        },
+        "verification_data": {
+          "type": "object",
+          "description": "Additional verification info (order number, last purchase, etc.)",
+          "required": false
+        },
+        "channel": {
+          "type": "string",
+          "description": "Communication channel being used",
+          "required": false
+        }
+      },
+      "outputs": {
+        "customer_found": {
+          "type": "boolean",
+          "description": "Whether customer was identified"
+        },
+        "customer_id": {
+          "type": "string",
+          "description": "Unique customer identifier"
+        },
+        "customer_profile": {
+          "type": "object",
+          "description": "Full customer profile (tier, history, preferences)"
+        },
+        "verification_status": {
+          "type": "string",
+          "enum": ["verified", "partial", "unverified", "failed"],
+          "description": "Verification status"
+        },
+        "personalization_context": {
+          "type": "object",
+          "description": "Context for personalizing response (name, tier benefits, recent activity)"
+        },
+        "recommended_actions": {
+          "type": "array",
+          "description": "Suggested actions based on customer profile"
+        }
+      }
+    }
+  ],
+  "skill_flow": [
+    "customer-identification",
+    "sentiment-analysis",
+    "knowledge-retrieval",
+    "escalation-decision",
+    "channel-adaptation"
+  ]
+}

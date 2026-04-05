@@ -1,0 +1,292 @@
+# Production Configuration
+
+## Environment Variables
+
+```bash
+# API Keys
+SENDGRID_API_KEY=your_sendgrid_api_key
+TWILIO_ACCOUNT_SID=your_twilio_sid
+TWILIO_AUTH_TOKEN=your_twilio_token
+TWILIO_WHATSAPP_NUMBER=+14155238886
+
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/techNova_support
+REDIS_URL=redis://localhost:6379/0
+
+# Vector DB (Knowledge Base)
+PINECONE_API_KEY=your_pinecone_key
+PINECONE_ENVIRONMENT=us-west1-gcp
+PINECONE_INDEX=technova-kb
+
+# LLM Configuration
+LLM_PROVIDER=openai  # openai, anthropic, or local
+OPENAI_API_KEY=your_openai_key
+ANTHROPIC_API_KEY=your_anthropic_key
+LLM_MODEL=gpt-4-turbo-preview
+LLM_TEMPERATURE=0.7
+LLM_MAX_TOKENS=500
+
+# Feature Flags
+ENABLE_AUTO_ESCALATION=true
+ENABLE_SENTIMENT_ANALYSIS=true
+ENABLE_KNOWLEDGE_RETRIEVAL=true
+HUMAN_REVIEW_MODE=sampling  # all, sampling, none
+
+# Rate Limiting
+RATE_LIMIT_PER_MINUTE=100
+RATE_LIMIT_BURST=20
+
+# Monitoring
+DATADOG_API_KEY=your_datadog_key
+LOG_LEVEL=INFO
+ENABLE_METRICS=true
+
+# SLA Configuration
+SLA_P0_MINUTES=15
+SLA_P1_MINUTES=60
+SLA_P2_MINUTES=240
+SLA_P3_MINUTES=1440
+
+# Security
+ENCRYPTION_KEY=your_encryption_key
+PII_REDACTION_ENABLED=true
+GDPR_COMPLIANCE_MODE=true
+```
+
+---
+
+## Escalation Rules Configuration
+
+```yaml
+escalation_rules:
+  ESC-001:
+    name: "Enterprise Integration"
+    priority: P1
+    target_team: solutions_engineering
+    sla_minutes: 60
+    triggers:
+      keywords: ["enterprise", "SSO", "SAML", "50+ users"]
+      category: technical-integration
+    requires_human: true
+
+  ESC-002:
+    name: "Refund/Billing Dispute"
+    priority: P1
+    target_team: billing
+    sla_minutes: 60
+    triggers:
+      keywords: ["refund", "charged twice", "payment failed", "billing error"]
+      category: billing
+    requires_human: true
+
+  ESC-003:
+    name: "Legal/Compliance"
+    priority: P0
+    target_team: legal
+    sla_minutes: 15
+    triggers:
+      keywords: ["GDPR", "HIPAA", "SOC 2", "compliance", "legal", "regulation"]
+      category: compliance
+    requires_human: true
+
+  ESC-004:
+    name: "Angry Customer"
+    priority: P0
+    target_team: senior_support
+    sla_minutes: 15
+    triggers:
+      sentiment_threshold: -0.7
+      keywords: ["unacceptable", "worst", "cancel"]
+    requires_human: true
+
+  ESC-005:
+    name: "System Outage"
+    priority: P0
+    target_team: engineering
+    sla_minutes: 15
+    triggers:
+      keywords: ["not working", "outage", "down", "broken"]
+      spike_detection: true  # Multiple similar tickets
+    requires_human: true
+
+  ESC-006:
+    name: "Data Loss/Security"
+    priority: P0
+    target_team: security
+    sla_minutes: 15
+    triggers:
+      keywords: ["data lost", "hacked", "unauthorized", "security breach"]
+    requires_human: true
+
+  ESC-007:
+    name: "VIP Customer"
+    priority: P1
+    target_team: dedicated_support
+    sla_minutes: 60
+    triggers:
+      customer_tier: Enterprise
+      arr_threshold: 50000
+    requires_human: true
+
+  ESC-008:
+    name: "API/Integration Issue"
+    priority: P2
+    target_team: technical_support
+    sla_minutes: 240
+    triggers:
+      keywords: ["API", "webhook", "integration", "developer", "REST"]
+      category: technical-integration
+    requires_human: false
+
+  ESC-009:
+    name: "Cancellation Request"
+    priority: P1
+    target_team: retention
+    sla_minutes: 60
+    triggers:
+      keywords: ["cancel", "close account", "leaving", "churn"]
+      category: cancellation
+    requires_human: true
+
+  ESC-010:
+    name: "Feature Request"
+    priority: P3
+    target_team: product
+    sla_minutes: 1440
+    triggers:
+      category: feature-request
+      keywords: ["roadmap", "when will", "planning", "feature request"]
+    requires_human: false
+```
+
+---
+
+## Response Template Configuration
+
+```yaml
+templates:
+  email-tech-neutral:
+    channel: email
+    category: technical-integration
+    sentiment_range: [-0.3, 0.3]
+    word_count: [150, 300]
+    tone: professional
+    structure:
+      - greeting
+      - acknowledgment
+      - solution_steps
+      - additional_context
+      - follow_up_offer
+      - sign_off
+
+  email-billing-frustrated:
+    channel: email
+    category: billing
+    sentiment_range: [-0.7, -0.3]
+    word_count: [150, 250]
+    tone: empathetic
+    structure:
+      - greeting
+      - empathy_statement
+      - apology
+      - action_items
+      - timeline
+      - reference_info
+      - personal_monitoring_promise
+      - sign_off
+
+  whatsapp-howto-neutral:
+    channel: whatsapp
+    category: how-to
+    sentiment_range: [-0.3, 0.3]
+    word_count: [20, 60]
+    tone: casual
+    structure:
+      - greeting_with_emoji
+      - numbered_steps (1-3)
+      - offer_help
+      - closing_emoji
+
+  whatsapp-bug-angry:
+    channel: whatsapp
+    category: bug-report
+    sentiment_range: [-1.0, -0.7]
+    word_count: [30, 70]
+    tone: empathetic_urgent
+    structure:
+      - empathy_statement
+      - urgency_acknowledgment
+      - update_promise_with_timeline
+      - optional_workaround
+      - closing_emoji
+
+  webform-tech-neutral:
+    channel: webform
+    category: technical-integration
+    sentiment_range: [-0.3, 0.3]
+    word_count: [80, 150]
+    tone: semi_formal
+    structure:
+      - greeting
+      - troubleshooting_steps
+      - info_request
+      - timeline
+      - sign_off
+```
+
+---
+
+## Intent Categories
+
+```yaml
+intent_categories:
+  technical-integration:
+    keywords: ["integration", "API", "SSO", "SAML", "webhook", "connect", "sync"]
+    escalation_rules: [ESC-001, ESC-008]
+    response_templates: [email-tech-neutral, webform-tech-neutral]
+
+  billing:
+    keywords: ["refund", "charged", "payment", "invoice", "transaction", "billing"]
+    escalation_rules: [ESC-002]
+    response_templates: [email-billing-frustrated]
+
+  feature-request:
+    keywords: ["feature request", "roadmap", "when will", "would be amazing", "wish"]
+    escalation_rules: [ESC-010]
+    response_templates: [email-feature-neutral]
+
+  bug-report:
+    keywords: ["bug", "not working", "broken", "error", "issue", "problem"]
+    escalation_rules: [ESC-005]
+    response_templates: [webform-tech-neutral, whatsapp-bug-angry]
+
+  how-to:
+    keywords: ["how do I", "how to", "can you help", "steps", "guide"]
+    escalation_rules: []
+    response_templates: [whatsapp-howto-neutral, email-howto-neutral]
+
+  compliance:
+    keywords: ["GDPR", "HIPAA", "SOC 2", "compliance", "legal", "regulation"]
+    escalation_rules: [ESC-003]
+    response_templates: [webform-compliance-formal]
+
+  cancellation:
+    keywords: ["cancel", "close account", "leaving", "churn"]
+    escalation_rules: [ESC-009]
+    response_templates: [email-cancellation-retention]
+
+  sales:
+    keywords: ["pricing", "quote", "enterprise", "demo", "sales"]
+    escalation_rules: [ESC-001, ESC-007]
+    response_templates: [email-sales-professional]
+
+  account:
+    keywords: ["account", "profile", "settings", "password", "login"]
+    escalation_rules: []
+    response_templates: [email-account-neutral]
+
+  performance:
+    keywords: ["slow", "performance", "lag", "loading", "speed"]
+    escalation_rules: [ESC-005]
+    response_templates: [webform-performance-neutral]
+```

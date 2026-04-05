@@ -1,0 +1,122 @@
+---
+# Ingress Configuration
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: technova-ingress
+  namespace: technova
+  labels:
+    app: technova
+  annotations:
+    # NGINX Ingress annotations
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    
+    # Rate limiting
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+    nginx.ingress.kubernetes.io/limit-burst: "200"
+    
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header X-Content-Type-Options "nosniff" always;
+      add_header X-Frame-Options "DENY" always;
+      add_header X-XSS-Protection "1; mode=block" always;
+      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    
+    # CORS (if needed)
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://technova.com, https://app.technova.com"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+    
+    # Certificate manager
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.technova.com
+        - support.technova.com
+      secretName: technova-tls
+  rules:
+    - host: api.technova.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: support-api
+                port:
+                  number: 80
+    
+    - host: support.technova.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: support-api
+                port:
+                  number: 80
+          
+          # WebSocket support
+          - path: /ws
+            pathType: Prefix
+            backend:
+              service:
+                name: support-api
+                port:
+                  number: 80
+          
+          # Webhooks
+          - path: /webhooks
+            pathType: Prefix
+            backend:
+              service:
+                name: support-api
+                port:
+                  number: 80
+          
+          # API documentation
+          - path: /docs
+            pathType: Prefix
+            backend:
+              service:
+                name: support-api
+                port:
+                  number: 80
+          
+          - path: /redoc
+            pathType: Prefix
+            backend:
+              service:
+                name: support-api
+                port:
+                  number: 80
+
+---
+# Alternative: Simple Ingress without TLS (for development)
+# Uncomment for development use
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: technova-ingress-dev
+#   namespace: technova
+# spec:
+#   ingressClassName: nginx
+#   rules:
+#     - host: api.local
+#       http:
+#         paths:
+#           - path: /
+#             pathType: Prefix
+#             backend:
+#               service:
+#                 name: support-api
+#                 port:
+#                   number: 80

@@ -1,0 +1,272 @@
+{
+  "TKT-C77D6508": {
+    "ticket_id": "TKT-C77D6508",
+    "name": "Ali Khan",
+    "email": "ali@test.com",
+    "subject": "Gantt Chart Help",
+    "category": "general",
+    "priority": "medium",
+    "status": "open",
+    "created_at": "2026-04-05T16:34:57.494512",
+    "messages": [
+      {
+        "id": "MSG-99A035",
+        "role": "customer",
+        "content": "How do I create Gantt charts?",
+        "created_at": "2026-04-05T16:34:57.494560"
+      }
+    ]
+  },
+  "TKT-92DEC833": {
+    "ticket_id": "TKT-92DEC833",
+    "name": "farzana shah",
+    "email": "fajjibarbie@gmail.com",
+    "subject": "send me product details",
+    "category": "general",
+    "priority": "medium",
+    "status": "open",
+    "created_at": "2026-04-05T16:36:41.393256",
+    "messages": [
+      {
+        "id": "MSG-501A4A",
+        "role": "customer",
+        "content": "send me tha product details n how can i purchase it",
+        "created_at": "2026-04-05T16:36:41.393314"
+      }
+    ]
+  },
+  "TKT-DDEF4C25": {
+    "ticket_id": "TKT-DDEF4C25",
+    "name": "fajjishah",
+    "email": "fajshah@gmail.com",
+    "subject": "how can i purchase it",
+    "category": "general",
+    "priority": "medium",
+    "status": "open",
+    "created_at": "2026-04-05T16:39:40.305830",
+    "messages": [
+      {
+        "id": "MSG-BB3568",
+        "role": "customer",
+        "content": "send me the detail of ur product",
+        "created_at": "2026-04-05T16:39:40.305872"
+      }
+    ]
+  },
+  "TKT-AE011FC9": {
+    "ticket_id": "TKT-AE011FC9",
+    "name": "Ahmed Khan",
+    "email": "ahmed.khan@company.com",
+    "subject": "How to create a Kanban board?",
+    "category": "general",
+    "priority": "medium",
+    "status": "open",
+    "created_at": "2026-04-05T16:54:05.570034",
+    "messages": [
+      {
+        "id": "MSG-A78C34",
+        "role": "customer",
+        "content": "Hi, I'm new to TechNova and I want to create a Kanban board for my team. Can you help me get started with the basic setup?",
+        "created_at": "2026-04-05T16:54:05.570076"
+      }
+    ]
+  },
+  "TKT-65CB57EB": {
+    "ticket_id": "TKT-65CB57EB",
+    "name": "Sarah Ali",
+    "email": "sarah.ali@startup.io",
+    "subject": "Billing - Charged twice this month",
+    "category": "general",
+    "priority": "medium",
+    "status": "open",
+    "created_at": "2026-04-05T16:54:08.440652",
+    "messages": [
+      {
+        "id": "MSG-7ABFF6",
+        "role": "customer",
+        "content": "I noticed that I was charged twice for this month's subscription. Can you please investigate and process a refund?",
+        "created_at": "2026-04-05T16:54:08.440704"
+      }
+    ]
+  },
+  "TKT-F9C55DD6": {
+    "ticket_id": "TKT-F9C55DD6",
+    "name": "Usman Malik",
+    "email": "usman.m@enterprise.com",
+    "subject": "Integration with Slack not working",
+    "category": "general",
+    "priority": "medium",
+    "status": "open",
+    "created_at": "2026-04-05T16:54:11.292610",
+    "messages": [
+      {
+        "id": "MSG-8E04EA",
+        "role": "customer",
+        "content": "Our Slack integration stopped working yesterday. We're not receiving notifications when tasks are assigned.",
+        "created_at": "2026-04-05T16:54:11.292632"
+      }
+    ]
+  },
+  "TKT-3C4C8AFE": {
+    "ticket_id": "TKT-3C4C8AFE",
+    "name": "Fatima Noor",
+    "email": "fatima.noor@tech.com",
+    "subject": "Feature Request - Dark Mode",
+    "category": "general",
+    "priority": "medium",
+    "status": "open",
+    "created_at": "2026-04-05T16:54:14.131898",
+    "messages": [
+      {
+        "id": "MSG-03DCA5",
+        "role": "customer",
+        "content": "Love the product! Would be great to have a dark mode option for late night work sessions.",
+        "created_at": "2026-04-05T16:54:14.131924"
+      }
+    ]
+  },
+  "TKT-7878CBCE": {
+    "ticket_id": "TKT-7878CBCE",
+    "name": "Hassan Raza",
+    "email": "hassan.r@agency.com",
+    "subject": "How to use Gantt charts?",
+    "category": "general",
+    "priority": "medium",
+    "status": "open",
+    "created_at": "2026-04-05T16:54:16.996792",
+    "messages": [
+      {
+        "id": "MSG-830A66",
+        "role": "customer",
+        "content": "I need help creating a Gantt chart for my construction project with dependencies and milestones.",
+        "created_at": "2026-04-05T16:54:16.996835"
+      }
+    ]
+  },
+  "TKT-424797CC": {
+    "ticket_id": "TKT-424797CC",
+    "name": "Ahmed Khan",
+    "email": "ahmed.khan@company.com",
+    "subject": "How to create a Kanban board?",
+    "category": "general",
+    "priority": "medium",
+    "status": "open",
+    "created_at": "2026-04-05T17:05:32.598873",
+    "messages": [
+      {
+        "id": "MSG-7BA937",
+        "role": "customer",
+        "content": "Hi, I'm new to TechNova and I want to create a Kanban board for my team. Can you help me get started with the basic setup?",
+        "created_at": "2026-04-05T17:05:32.598914"
+      }
+    ]
+  },
+  "TKT-FF58760B": {
+    "ticket_id": "TKT-FF58760B",
+    "name": "Sarah Ali",
+    "email": "sarah.ali@startup.io",
+    "subject": "Billing - Charged twice this month",
+    "category": "general",
+    "priority": "medium",
+    "status": "open",
+    "created_at": "2026-04-05T17:05:35.457534",
+    "messages": [
+      {
+        "id": "MSG-7214A5",
+        "role": "customer",
+        "content": "I noticed that I was charged twice for this month's subscription. Can you please investigate and process a refund?",
+        "created_at": "2026-04-05T17:05:35.457547"
+      }
+    ]
+  },
+  "TKT-D913F78C": {
+    "ticket_id": "TKT-D913F78C",
+    "name": "Usman Malik",
+    "email": "usman.m@enterprise.com",
+    "subject": "Integration with Slack not working",
+    "category": "general",
+    "priority": "medium",
+    "status": "open",
+    "created_at": "2026-04-05T17:05:38.292577",
+    "messages": [
+      {
+        "id": "MSG-E4275E",
+        "role": "customer",
+        "content": "Our Slack integration stopped working yesterday. We're not receiving notifications when tasks are assigned.",
+        "created_at": "2026-04-05T17:05:38.292612"
+      }
+    ]
+  },
+  "TKT-D2F58E3F": {
+    "ticket_id": "TKT-D2F58E3F",
+    "name": "Fatima Noor",
+    "email": "fatima.noor@tech.com",
+    "subject": "Feature Request - Dark Mode",
+    "category": "general",
+    "priority": "medium",
+    "status": "open",
+    "created_at": "2026-04-05T17:05:41.150106",
+    "messages": [
+      {
+        "id": "MSG-BB2759",
+        "role": "customer",
+        "content": "Love the product! Would be great to have a dark mode option for late night work sessions.",
+        "created_at": "2026-04-05T17:05:41.150151"
+      }
+    ]
+  },
+  "TKT-353E6795": {
+    "ticket_id": "TKT-353E6795",
+    "name": "Hassan Raza",
+    "email": "hassan.r@agency.com",
+    "subject": "How to use Gantt charts?",
+    "category": "general",
+    "priority": "medium",
+    "status": "open",
+    "created_at": "2026-04-05T17:05:43.982803",
+    "messages": [
+      {
+        "id": "MSG-E96926",
+        "role": "customer",
+        "content": "I need help creating a Gantt chart for my construction project with dependencies and milestones.",
+        "created_at": "2026-04-05T17:05:43.982816"
+      }
+    ]
+  },
+  "TKT-C200C4D2": {
+    "ticket_id": "TKT-C200C4D2",
+    "name": "ahmed khan",
+    "email": "ahmedkhan@gmail.com",
+    "subject": "how its work",
+    "category": "general",
+    "priority": "medium",
+    "status": "open",
+    "created_at": "2026-04-05T17:08:38.003636",
+    "messages": [
+      {
+        "id": "MSG-221006",
+        "role": "customer",
+        "content": "how can i purchaase",
+        "created_at": "2026-04-05T17:08:38.003662"
+      }
+    ]
+  },
+  "TKT-83F82EF1": {
+    "ticket_id": "TKT-83F82EF1",
+    "name": "maida",
+    "email": "maida@gmail.com",
+    "subject": "can i buy ur product",
+    "category": "general",
+    "priority": "medium",
+    "status": "open",
+    "created_at": "2026-04-05T17:14:00.693992",
+    "messages": [
+      {
+        "id": "MSG-08DC7A",
+        "role": "customer",
+        "content": "all items are availavle here or not",
+        "created_at": "2026-04-05T17:14:00.694017"
+      }
+    ]
+  }
+}
